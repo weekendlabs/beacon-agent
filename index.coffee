@@ -109,7 +109,7 @@ app.post '/containers/create', (req, res) ->
                       #start synapse
                       #add condition for running synapse only for node images .. imageName == "node"
 
-                      startSynapse().then ->
+                      startSynapse("#{process.cwd()}/synapse.json.conf").then ->
                         console.log("synapse exited")
                       synapseStarted = true
                       console.log("synapse started")
