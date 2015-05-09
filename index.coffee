@@ -58,7 +58,6 @@ app.post '/containers/create', (req, res) ->
   imageName = req.body.ImageName
   bucketName = req.body.BucketName
   fileName = req.body.FileName
-  containerName = req.body.ContainerName
   #getting tar file from s3
   s3Utility.getFile(bucketName, fileName).then (destPath) ->
     console.log("pulled from s3 and about to unpack")
@@ -69,7 +68,7 @@ app.post '/containers/create', (req, res) ->
       memory = 100 * 1024 #bytes
       #creating the container
       request
-        .post("#{baseURL}/containers/create?name=#{containerName}")
+        .post("#{baseURL}/containers/create")
         .send({"Image": imageName, "Tty":true,"AttachStdin":true,"OpenStdin":true, "Volumes":{"/tmp":{}
           },"WorkingDir":"/tmp", "Cmd":["node","index.js"],"ExposedPorts":{"3000/tcp":{}}})
         .set('Content-type','application/json')
@@ -105,17 +104,21 @@ app.post '/containers/create', (req, res) ->
                     fs.writeFile("#{process.cwd()}/synapse.json.conf", JSON.stringify(synapseJSON), (err) ->
                       if(err)
                         console.log("error in writing synapse json conf file :#{err}")
-                      console.log("wrote synapse.json.conf to filesystem")
-                      #start synapse
-                      #add condition for running synapse only for node images .. imageName == "node"
+                        res.status(500).end()
+                      else
+                        console.log("wrote synapse.json.conf to filesystem")
+                        #start synapse
+                        #add condition for running synapse only for node images .. imageName == "node"
 
-                      startSynapse("#{process.cwd()}/synapse.json.conf").then ->
-                        console.log("synapse exited")
-                      synapseStarted = true
-                      console.log("synapse started")
-                      res.json({"containerId":containerId}).end()
+                        startSynapse("#{process.cwd()}/synapse.json.conf").then ->
+                          console.log("synapse exited")
+                        synapseStarted = true
+                        console.log("synapse started")
+                        res.json({"containerId":containerId})
                     )
-                  res.json({"containerId":containerId})
+                  else
+                    res.status(500).end()
+
 
 
 app.post '/containers/terminate', (req, res) ->
