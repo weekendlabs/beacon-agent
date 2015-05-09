@@ -101,7 +101,7 @@ app.post '/containers/create', (req, res) ->
                   synapseJSON.services.nodesrv.discovery.image_name = "node"
                   #console.log("synapseJSON:"+synapseJSON)
                   if(synapseStarted == false && imageName == "node")
-                    fs.writeFile("#{os.tmpdir()}/synapse.json.conf", JSON.stringify(synapseJSON), (err) ->
+                    fs.writeFile("/home/ubuntu/beacon-agent/synapse.json.conf", JSON.stringify(synapseJSON), (err) ->
                       if(err)
                         console.log("error in writing synapse json conf file :#{err}")
                         res.status(500).end()
@@ -110,7 +110,7 @@ app.post '/containers/create', (req, res) ->
                         #start synapse
                         #add condition for running synapse only for node images .. imageName == "node"
 
-                        startSynapse("#{os.tmpdir()}/synapse.json.conf").then ->
+                        startSynapse("/home/ubuntu/beacon-agent/synapse.json.conf").then ->
                           console.log("synapse exited")
                         synapseStarted = true
                         console.log("synapse started")
