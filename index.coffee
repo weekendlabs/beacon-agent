@@ -15,6 +15,8 @@ app = express()
 server = require('http').Server(app)
 io = require('socket.io')(server)
 
+require('./events')(io)
+
 #global variables
 synapseStarted = false
 baseURL = 'http://localhost:4243'
@@ -23,24 +25,6 @@ runningContainers = []
 app.use cors()
 app.use bodyParser.json()
 server.listen(8080)
-
-io.on 'connection', (socket) ->
-  console.log("socket connected")
-  #get list of containers
-  request
-  .get("#{baseURL}/containers/json")
-  .end (err, res) ->
-    if(err)
-      console.log("error in getting list of containers:#{err}")
-    else
-      res.body.forEach((container) ->
-        containerId = container.Id
-        #call getStats for each container with socket
-        stats.getStats(containerId, socket)
-      )
-
-
-
 
 app.get '/images', (req, res) ->
   request
@@ -155,7 +139,7 @@ app.post '/containers/hotdeploy', (req, res) ->
 
 app.get '/containers', (req, res) ->
   request
-    .get("#{baseURL}/containers/json?all=1")
+    .get("#{baseURL}/containers/json")
     .end (err, dockerResponse) ->
       if dockerResponse.ok
         console.log 'got response from DOCKER remote API'
@@ -164,9 +148,3 @@ app.get '/containers', (req, res) ->
       else
         console.log("error:#{err}")
         res.status(dockerResponse.status).end()
-
-# app.post '/containers/stats', (req, res) ->
-#   containerId = req.body.containerId
-#   console.log containerId
-#   stats.getStats(containerId)
-#   res.status(200).end()
