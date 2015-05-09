@@ -8,7 +8,7 @@ tarArchive = require './lib/tar-archive'
 synapseInputJSON = require './resources/synapse-json'
 fs = require 'fs'
 startSynapse = require './lib/start-synapse'
-
+os = require 'os'
 
 
 app = express()
@@ -101,7 +101,7 @@ app.post '/containers/create', (req, res) ->
                   synapseJSON.services.nodesrv.discovery.image_name = "node"
                   #console.log("synapseJSON:"+synapseJSON)
                   if(synapseStarted == false && imageName == "node")
-                    fs.writeFile("#{process.cwd()}/synapse.json.conf", JSON.stringify(synapseJSON), (err) ->
+                    fs.writeFile("#{os.tmpdir()}/synapse.json.conf", JSON.stringify(synapseJSON), (err) ->
                       if(err)
                         console.log("error in writing synapse json conf file :#{err}")
                         res.status(500).end()
@@ -110,7 +110,7 @@ app.post '/containers/create', (req, res) ->
                         #start synapse
                         #add condition for running synapse only for node images .. imageName == "node"
 
-                        startSynapse("#{process.cwd()}/synapse.json.conf").then ->
+                        startSynapse("#{os.tmpdir()}/synapse.json.conf").then ->
                           console.log("synapse exited")
                         synapseStarted = true
                         console.log("synapse started")
