@@ -1,0 +1,2 @@
+module.exports =
+  JSON.stringify({"services":{"nodesrv":{"discovery":{"method":"docker","servers":[{"name":"localhost","host":"localhost"}],"container_port":8000,"image_name":"local/nodeapp"},"haproxy":{"port":8080,"listen":["mode http","option httpchk /","http-check expect string Hello"]}}},"haproxy":{"reload_command":"service haproxy reload","config_file_path":"/etc/haproxy/haproxy.cfg","do_writes":true,"do_reloads":true,"global":["chroot /var/lib/haproxy","user haproxy","group haproxy","daemon"],"defaults":["contimeout 5000","clitimeout 50000","srvtimeout 50000"]}})
