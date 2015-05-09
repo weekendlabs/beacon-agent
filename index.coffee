@@ -9,14 +9,38 @@ synapseInputJSON = require './resources/synapse-json'
 fs = require 'fs'
 startSynapse = require './lib/start-synapse'
 
+
+
 app = express()
-app.use cors()
-app.use bodyParser.json()
+server = require('http').Server(app)
+io = require('socket.io')(server)
 
 #global variables
 synapseStarted = false
 baseURL = 'http://localhost:4243'
 runningContainers = []
+
+app.use cors()
+app.use bodyParser.json()
+server.listen(10000)
+
+io.on 'connection', (socket) ->
+  console.log("socket connected")
+  #get list of containers
+  request
+  .get("#{baseURL}/containers/json")
+  .end(err, res) ->
+    if(err)
+      console.log("error in getting list of containers:#{err}")
+    else
+      res.body.forEach((container) ->
+        containerId = container.Id
+        #call getStats for each container with socket
+        stat.getStats(containerId, socket)
+      )
+
+
+
 
 app.get '/images', (req, res) ->
   request
@@ -64,7 +88,7 @@ app.post '/containers/create', (req, res) ->
               runningContainers.push(containerId)
             request
               .post("#{baseURL}/containers/#{containerId}/start")
-              .send({"PublishAllPorts":true, "Binds":"#{destPath}#{fileName.split('.')[0]}:/tmp:rw","PortBindings":{"3000/tcp":[{"HostPort":"3000"}]}})
+              .send({"PublishAllPorts":true, "Binds":"#{destPath}#{fileName.split('.')[0]}:/tmp:rw","PortBindings":{"3000/tcp":[{"HostPort":"8000"}]}})
               .set('Content-type','application/json')
               .end (err, dockerResponse) ->
                 if(err)
@@ -136,10 +160,8 @@ app.get '/containers', (req, res) ->
         console.log("error:#{err}")
         res.status(dockerResponse.status).end()
 
-app.post '/containers/stats', (req, res) ->
-  containerId = req.body.containerId
-  console.log containerId
-  stats.getStats(containerId)
-  res.status(200).end()
-
-app.listen(10000)
+# app.post '/containers/stats', (req, res) ->
+#   containerId = req.body.containerId
+#   console.log containerId
+#   stats.getStats(containerId)
+#   res.status(200).end()

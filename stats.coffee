@@ -6,7 +6,7 @@ previousSystem = 0.0
 previousMemoryUsage = 0.0
 previousNetworkUsage = 0.0
 
-getStats = (containerId) ->
+getStats = (containerId, socket) ->
   oboe("http://localhost:4243/containers/#{containerId}/stats")
     .done((res) ->
       #-----------Memory-----------
@@ -26,6 +26,7 @@ getStats = (containerId) ->
       previousCpu = res.cpu_stats.cpu_usage.total_usage
       previousSystem = res.cpu_stats.system_cpu_usage
       console.log("cpu:"+cpuPercent)
+      socket.emit('stats',{m:memPercent, n:networkUsage, c:cpuPercent})
     )
     .fail(->
       console.log("failed")
