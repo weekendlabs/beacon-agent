@@ -22,21 +22,21 @@ runningContainers = []
 
 app.use cors()
 app.use bodyParser.json()
-server.listen(10000)
+server.listen(8080)
 
 io.on 'connection', (socket) ->
   console.log("socket connected")
   #get list of containers
   request
   .get("#{baseURL}/containers/json")
-  .end(err, res) ->
+  .end (err, res) ->
     if(err)
       console.log("error in getting list of containers:#{err}")
     else
       res.body.forEach((container) ->
         containerId = container.Id
         #call getStats for each container with socket
-        stat.getStats(containerId, socket)
+        stats.getStats(containerId, socket)
       )
 
 
@@ -82,13 +82,13 @@ app.post '/containers/create', (req, res) ->
             console.log dockerResponse.body
             #starting the container
             containerId = dockerResponse.body.Id
-            console.log containerId
+            #console.log containerId
             #keeping track of running container ids for hot deploy..also check for imageName
             if(imageName == "node")
               runningContainers.push(containerId)
             request
               .post("#{baseURL}/containers/#{containerId}/start")
-              .send({"PublishAllPorts":true, "Binds":"#{destPath}#{fileName.split('.')[0]}:/tmp:rw","PortBindings":{"3000/tcp":[{"HostPort":"8000"}]}})
+              .send({"PublishAllPorts":true, "Binds":"#{destPath}#{fileName.split('.')[0]}:/tmp:rw","PortBindings":{"3000/tcp":[{}]}})
               .set('Content-type','application/json')
               .end (err, dockerResponse) ->
                 if(err)
@@ -99,21 +99,23 @@ app.post '/containers/create', (req, res) ->
                   console.log dockerResponse.body
                   #writing synapseInputJSON to file /etc/synapse.json.conf
                   synapseJSON = JSON.parse(synapseInputJSON)
-                  synapseJSON.services.nodesrv.discovery.image_name = containerName
-                  console.log("synapseJSON:"+synapseJSON)
-                  fs.writeFile("#{process.cwd()}/synapse.json.conf", JSON.stringify(synapseJSON), (err) ->
-                    if(err)
-                      console.log("error in writing synapse json conf file :#{err}")
-                    console.log("wrote synapse.json.conf to filesystem")
-                    #start synapse
-                    #add condition for running synapse only for node images .. imageName == "node"
-                    if(synapseStarted == false && imageName == "node")
+                  synapseJSON.services.nodesrv.discovery.image_name = "node"
+                  #console.log("synapseJSON:"+synapseJSON)
+                  if(synapseStarted == false && imageName == "node")
+                    fs.writeFile("#{process.cwd()}/synapse.json.conf", JSON.stringify(synapseJSON), (err) ->
+                      if(err)
+                        console.log("error in writing synapse json conf file :#{err}")
+                      console.log("wrote synapse.json.conf to filesystem")
+                      #start synapse
+                      #add condition for running synapse only for node images .. imageName == "node"
+
                       startSynapse().then ->
                         console.log("synapse exited")
                       synapseStarted = true
                       console.log("synapse started")
-                    res.status(200).end()
-                  )
+                      res.json({"containerId":containerId}).end()
+                    )
+                  res.json({"containerId":containerId})
 
 
 app.post '/containers/terminate', (req, res) ->

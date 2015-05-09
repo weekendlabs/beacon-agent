@@ -26,7 +26,7 @@ getStats = (containerId, socket) ->
       previousCpu = res.cpu_stats.cpu_usage.total_usage
       previousSystem = res.cpu_stats.system_cpu_usage
       console.log("cpu:"+cpuPercent)
-      socket.emit('stats',{m:memPercent, n:networkUsage, c:cpuPercent})
+      socket.emit('stats',{id:containerId, m:memPercent, n:networkUsage, c:cpuPercent})
     )
     .fail(->
       console.log("failed")
