@@ -37,12 +37,13 @@ getFile = (bucketName, fileName) ->
       fs.open destPath + fileName, 'w', (err, fd) ->
         if(err)
           console.log("error in opening file path"+err)
-        fs.write fd, data.Body, 0, data.Body.length, null, (err) ->
-          if(err)
-            console.log("error in writing file from buffer")
-          fs.close fd, ->
-            console.log("file written successfully")
-            resolve(destPath)
+        else
+          fs.write fd, data.Body, 0, data.Body.length, null, (err) ->
+            if(err)
+              console.log("error in writing file from buffer")
+            fs.close fd, ->
+              console.log("file written successfully")
+              resolve(destPath)
 
 
 module.exports =
